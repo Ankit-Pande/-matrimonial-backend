@@ -1,0 +1,222 @@
+// Database connection
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---------- Enums ----------
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum MaritalStatus {
+  NEVER_MARRIED
+  DIVORCED
+  WIDOWED
+  AWAITING_DIVORCE
+}
+
+enum ManglikStatus {
+  MANGLIK
+  NON_MANGLIK
+  ANSHIK_MANGLIK
+  DONT_KNOW
+}
+
+enum ProfessionType {
+  GOVERNMENT
+  BUSINESS
+  PRIVATE
+  NOT_WORKING
+}
+
+enum Diet {
+  VEG
+  NON_VEG
+  EGGETARIAN
+}
+
+enum PhotoPrivacy {
+  PUBLIC
+  PREMIUM_ONLY
+  ON_REQUEST
+}
+
+enum InterestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+// ---------- User (auth, role, premium) ----------
+model User {
+  id                    String    @id @default(uuid())
+  phone                 String    @unique
+  email                 String?   @unique
+  role                  Role      @default(USER)
+
+  isApproved            Boolean   @default(false)
+  isBlocked             Boolean   @default(false)
+  isDeleted             Boolean   @default(false)
+
+  isPremium             Boolean   @default(false)
+  subscriptionExpiresAt DateTime?
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  profile           Profile?
+  subscriptions     Subscription[]
+  sentInterests     Interest[]     @relation("SentInterests")
+  receivedInterests Interest[]     @relation("ReceivedInterests")
+
+  @@index([isApproved, isBlocked, isDeleted])
+  @@index([isPremium, subscriptionExpiresAt])
+}
+
+// ---------- Profile (saari details) ----------
+model Profile {
+  id            String        @id @default(uuid())
+  userId        String        @unique
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String
+  gender        Gender
+  dob           DateTime
+  maritalStatus MaritalStatus @default(NEVER_MARRIED)
+  motherTongue  String
+
+  religion      String        @default("Hindu")
+  caste         String
+  gotra         String?
+  manglikStatus ManglikStatus @default(DONT_KNOW)
+  diet          Diet          @default(VEG)
+
+  height        Float
+  weight        Int
+
+  education      String
+  professionType ProfessionType @default(PRIVATE)
+  jobTitle       String?
+  companyName    String?
+  annualIncome   Float?
+
+  state         String
+  city          String
+
+  photos        String[]
+  photoPrivacy  PhotoPrivacy  @default(PREMIUM_ONLY)
+  aboutMe       String?
+
+  partnerPreference PartnerPreference?
+  familyDetails     FamilyDetails?
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([gender, religion, caste])
+  @@index([gender, dob])
+  @@index([gender, maritalStatus])
+  @@index([gender, professionType])
+  @@index([gender, annualIncome])
+  @@index([gender, motherTongue])
+  @@index([gender, state, city])
+  @@index([createdAt])
+}
+
+// ---------- Partner Preference ----------
+model PartnerPreference {
+  id             String  @id @default(uuid())
+  profileId      String  @unique
+  profile        Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  minAge         Int?
+  maxAge         Int?
+  minHeight      Float?
+  maxHeight      Float?
+  preferredCaste String?
+  preferredCity  String?
+  notes          String?
+}
+
+// ---------- Family Details ----------
+model FamilyDetails {
+  id              String  @id @default(uuid())
+  profileId       String  @unique
+  profile         Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  fatherName      String?
+  fatherStatus    String?
+  motherName      String?
+  motherStatus    String?
+
+  totalBrothers   Int     @default(0)
+  marriedBrothers Int     @default(0)
+  totalSisters    Int     @default(0)
+  marriedSisters  Int     @default(0)
+
+  familyValues    String?
+  familyIncome    Float?
+  nativePlace     String?
+}
+
+// ---------- Interest (contact/inquiry) ----------
+model Interest {
+  id         String         @id @default(uuid())
+  fromUserId String
+  toUserId   String
+  fromUser   User           @relation("SentInterests", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser     User           @relation("ReceivedInterests", fields: [toUserId], references: [id], onDelete: Cascade)
+  status     InterestStatus @default(PENDING)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([fromUserId, toUserId])
+  @@index([toUserId, status])
+  @@index([fromUserId, status])
+}
+
+// ---------- Subscription (Razorpay payment) ----------
+model Subscription {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  razorpayOrderId   String        @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  amount            Int
+  planName          String
+  status            PaymentStatus @default(PENDING)
+  createdAt         DateTime      @default(now())
+
+  @@index([userId])
+}
+
+// ---------- Plan (price/discount, admin se editable) ----------
+model Plan {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  pricePaise      Int
+  discountPercent Int      @default(0)
+  durationDays    Int
+  isActive        Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+}
