@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../config/db";
 import { AppError } from "../utils/appError";
 import { AddProfileInput } from "../validation/admin.validation";
@@ -68,26 +69,25 @@ export const adminService = {
 
   // Admin khud profile add kare (walk-in member). Phone optional.
   async addProfile(data: AddProfileInput) {
-    const { phone, ...profileData } = data;
+    const { phone, partnerPreference, familyDetails, ...coreProfileData } = data;
     const userPhone = phone ?? `bureau_${Date.now()}`;
 
     const existing = await prisma.user.findUnique({ where: { phone: userPhone } });
     if (existing) throw new AppError("A user with this phone number already exists", 409);
 
-    const { partnerPreference, familyDetails, ...coreProfileData } = profileData as Record<string, unknown>;
+    // Profile data + nested relations (agar diye hon).
+    const profileCreate: Prisma.ProfileCreateWithoutUserInput = {
+      ...coreProfileData,
+      ...(partnerPreference ? { partnerPreference: { create: partnerPreference } } : {}),
+      ...(familyDetails ? { familyDetails: { create: familyDetails } } : {}),
+    };
 
     return prisma.user.create({
       data: {
         phone: userPhone,
         role: "USER",
         isApproved: true,
-        profile: {
-          create: {
-            ...(coreProfileData as object),
-            ...(partnerPreference ? { partnerPreference: { create: partnerPreference as object } } : {}),
-            ...(familyDetails ? { familyDetails: { create: familyDetails as object } } : {}),
-          },
-        },
+        profile: { create: profileCreate },
       },
       include: { profile: true },
     });
