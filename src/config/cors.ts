@@ -14,6 +14,9 @@ export const corsOptions: CorsOptions = {
     // Dev me sab allow (local testing aasan).
     if (env.NODE_ENV === "development") return callback(null, true);
 
+    // FRONTEND_ORIGINS me "*" ho to sab allow (demo/testing ke liye).
+    if (allowedOrigins.includes("*")) return callback(null, true);
+
     // Prod me sirf whitelist (web frontend).
     if (allowedOrigins.includes(origin)) return callback(null, true);
 
