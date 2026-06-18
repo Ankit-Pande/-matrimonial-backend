@@ -41,6 +41,8 @@ export const serializeProfile = (profile: ProfileFull, viewer: ViewerContext) =>
 
   return {
     id: profile.id,
+    // userId interest bhejne ke liye chahiye (interest User id pe lagta hai, Profile id pe nahi).
+    userId: profile.userId,
     name: profile.name,
     gender: profile.gender,
     age: calcAge(profile.dob),
