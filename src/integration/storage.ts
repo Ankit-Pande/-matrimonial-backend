@@ -25,6 +25,8 @@ const storage = new CloudinaryStorage({
       folder: "matrimonial_profiles",
       format,
       allowed_formats: ["jpg", "jpeg", "png", "webp"],
+      // Bade photo auto chhote — width max 1200px, quality auto (space + speed).
+      transformation: [{ width: 1200, height: 1200, crop: "limit", quality: "auto" }],
     };
   },
 });
@@ -38,9 +40,9 @@ const fileFilter: multer.Options["fileFilter"] = (_req, file, cb) => {
   return cb(null, true);
 };
 
-// max 2MB. MulterError (size/type) error.ts central handler pakadta hai.
+// max 5MB. MulterError (size/type) error.ts central handler pakadta hai.
 export const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 },
 });

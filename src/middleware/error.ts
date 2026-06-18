@@ -26,7 +26,7 @@ export const errorHandler = (
     if (err.code === "LIMIT_FILE_SIZE") {
       return res
         .status(400)
-        .json({ success: false, message: "File too large. Max size is 2MB." });
+        .json({ success: false, message: "File too large. Max size is 5MB." });
     }
     return res.status(400).json({ success: false, message: err.message });
   }
