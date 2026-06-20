@@ -53,7 +53,7 @@ export const interestService = {
       ...(cursor && { cursor: { id: cursor }, skip: 1 }),
       orderBy: { createdAt: "desc" },
       include: {
-        toUser: { select: { id: true, profile: { select: { name: true, photos: true } } } },
+        toUser: { select: { id: true, profile: { select: { id: true, name: true, photos: true } } } },
       },
     });
     const hasMore = items.length > limit;
@@ -69,7 +69,7 @@ export const interestService = {
       ...(cursor && { cursor: { id: cursor }, skip: 1 }),
       orderBy: { createdAt: "desc" },
       include: {
-        fromUser: { select: { id: true, profile: { select: { name: true, photos: true } } } },
+        fromUser: { select: { id: true, profile: { select: { id: true, name: true, photos: true } } } },
       },
     });
     const hasMore = items.length > limit;

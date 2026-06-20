@@ -31,15 +31,16 @@ export const searchService = {
       gender: targetGender,
       user: { isApproved: true, isBlocked: false, isDeleted: false },
       ...(filters.religion && { religion: filters.religion }),
-      ...(filters.caste && { caste: filters.caste }),
+      // Text fields case-insensitive — "pune"/"Pune"/"PUNE" sab match ho.
+      ...(filters.caste && { caste: { contains: filters.caste, mode: "insensitive" } }),
       ...(filters.maritalStatus && { maritalStatus: filters.maritalStatus }),
       ...(filters.professionType && { professionType: filters.professionType }),
       ...(filters.manglikStatus && { manglikStatus: filters.manglikStatus }),
       ...(filters.diet && { diet: filters.diet }),
       ...(filters.motherTongue && { motherTongue: filters.motherTongue }),
-      ...(filters.state && { state: filters.state }),
-      ...(filters.city && { city: filters.city }),
-      ...(filters.gotra && { gotra: filters.gotra }),
+      ...(filters.state && { state: { contains: filters.state, mode: "insensitive" } }),
+      ...(filters.city && { city: { contains: filters.city, mode: "insensitive" } }),
+      ...(filters.gotra && { gotra: { contains: filters.gotra, mode: "insensitive" } }),
       ...(Object.keys(dobFilter).length && { dob: dobFilter }),
       ...((filters.minHeight || filters.maxHeight) && {
         height: {
